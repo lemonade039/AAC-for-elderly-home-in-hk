@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AAC 廣東話輔助溝通板</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 禁用雙擊縮放，防止平板/觸控屏誤觸 */
+        * { 
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* 隱藏滾動條但保持滾動功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 卡片按壓與互動動畫 */
+        .card-active {
+            transform: scale(0.93) !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4) !important;
+            transition: all 0.1s ease;
+        }
+
+        /* 警報動態閃爍背景 */
+        @keyframes emergency-flash {
+            0%, 100% { background-color: rgba(220, 38, 38, 0.95); }
+            50% { background-color: rgba(185, 28, 28, 0.4); }
+        }
+        .alarm-overlay-active {
+            animation: emergency-flash 0.5s infinite;
+        }
+
+        /* 清晰廣東話/繁體中文預設字型 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- 頂部導覽與設定列 -->
+    <header class="bg-white shadow-md z-10 flex-shrink-0 border-b border-slate-200">
+        <div class="flex justify-between items-center px-3 md:px-6 py-2 md:py-3 gap-2">
+            <!-- 分類標籤頁 (Tabs) 容器 -->
+            <nav id="tabs-container" class="flex gap-2 overflow-x-auto no-scrollbar flex-grow py-1"></nav>
+            
+            <div class="flex items-center gap-2 shrink-0">
+                <!-- 🚨 叫護士緊急警報鈕 -->
+                <button id="alarm-btn" class="bg-red-600 hover:bg-red-700 text-white font-extrabold px-3 py-2 md:px-5 md:py-3 rounded-2xl shadow-lg flex items-center gap-1.5 text-lg md:text-2xl active:scale-95 transition-all border-2 border-red-400 animate-pulse">
+                    🚨 <span class="hidden sm:inline">叫護士</span>
+                </button>
+
+                <!-- 編輯模式切換按鈕 -->
+                <button id="edit-toggle-btn" class="text-2xl md:text-3xl opacity-70 hover:opacity-100 transition-opacity p-2 rounded-xl bg-slate-100 hover:bg-slate-200" title="進入/退出編輯模式">
+                    ⚙️
+                </button>
+            </div>
+        </div>
+        
+        <!-- 🗣️ 句子組合列 (Sentence Builder) -->
+        <div class="bg-blue-50/90 border-t border-b border-blue-200 px-3 md:px-6 py-2.5 flex items-center gap-2 md:gap-3">
+            <span class="text-blue-900 font-bold text-base md:text-xl shrink-0 flex items-center gap-1">
+                🗣️ <span class="hidden sm:inline">句子：</span>
+            </span>
+            
+            <!-- 詞彙積木顯示區 -->
+            <div id="sentence-container" class="flex-grow flex gap-2 overflow-x-auto no-scrollbar min-h-[52px] items-center px-3 py-1 bg-white rounded-2xl border-2 border-blue-200 shadow-inner">
+                <span id="sentence-placeholder" class="text-slate-400 text-base md:text-lg">點擊下方卡片組合句子...</span>
+            </div>
+            
+            <!-- 播放與清理按鈕群 -->
+            <div class="flex gap-1.5 md:gap-2 shrink-0">
+                <button id="play-sentence-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-2 md:px-5 md:py-2.5 rounded-xl shadow-md text-base md:text-xl active:scale-95 flex items-center gap-1 transition-colors">
+                    ▶️ <span class="hidden sm:inline">讀出</span>
+                </button>
+                <button id="backspace-sentence-btn" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-2 md:py-2.5 rounded-xl shadow-md text-base md:text-xl active:scale-95 transition-colors" title="刪除最後一個字">
+                    ⌫
+                </button>
+                <button id="clear-sentence-btn" class="bg-slate-400 hover:bg-slate-500 text-white font-bold px-3 py-2 md:py-2.5 rounded-xl shadow-md text-base md:text-xl active:scale-95 transition-colors" title="清空句子">
+                    🗑️
+                </button>
+            </div>
+        </div>
+
+        <!-- 編輯模式工具列 (預設隱藏) -->
+        <div id="edit-toolbar" class="hidden bg-amber-100/90 px-4 py-2 flex flex-wrap gap-2 justify-between items-center border-b border-amber-300">
+            <span class="text-amber-900 font-bold text-sm md:text-base flex items-center gap-1">
+                ⚠️ 編輯模式：點擊卡片修改，或新增卡片/分類。
+            </span>
+            <div class="flex gap-2 flex-wrap items-center">
+                <!-- 隱藏的檔案上傳元件 -->
+                <input type="file" id="camera-capture" accept="image/*" capture="environment" class="hidden">
+                <input type="file" id="gallery-upload" accept="image/*" class="hidden">
+                <input type="file" id="import-json-input" accept=".json" class="hidden">
+                
+                <button id="ai-camera-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">📷 影相 AI 新增</button>
+                <button id="ai-gallery-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🖼️ 相簿 AI 新增</button>
+                <button id="add-card-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">➕ 新增卡片</button>
+                <button id="export-json-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">💾 匯出設定</button>
+                <button id="import-json-btn" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">📂 匯入設定</button>
+                <button id="reset-default-btn" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🔄 重設預設</button>
+                <button id="api-key-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🔑 AI 金鑰</button>
+            </div>
+        </div>
+
+        <!-- 🔍 搜尋列 -->
+        <div class="px-3 md:px-6 py-2 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
+            <span class="text-slate-400">🔍</span>
+            <input type="text" id="search-input" placeholder="搜尋卡片詞彙..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1 text-base focus:outline-none focus:border-blue-500">
+            <button id="clear-search-btn" class="text-slate-400 hover:text-slate-600 hidden">✕</button>
+        </div>
+    </header>
+
+    <!-- 主要內容區：卡片網格 -->
+    <main class="flex-grow overflow-y-auto p-3 md:p-6 bg-slate-100 relative no-scrollbar">
+        <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 pb-8">
+            <!-- 卡片將由 JavaScript 動態生成 -->
+        </div>
+
+        <!-- AI 處理中的 Loading 畫面 -->
+        <div id="ai-loading" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center z-40 p-6">
+            <div class="animate-spin rounded-full h-16 w-16 border-4 border-purple-600 border-t-transparent mb-4"></div>
+            <p class="text-xl font-bold text-purple-900 text-center" id="ai-loading-text">Gemini AI 正在分析影像物件，請稍候...</p>
+        </div>
+    </main>
+
+    <!-- 編輯/新增卡片 Modal -->
+    <div id="edit-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center z-50 p-4">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 id="modal-title" class="text-2xl font-bold mb-5 text-slate-800">編輯卡片</h2>
+            <input type="hidden" id="edit-id">
+            
+            <div class="mb-4">
+                <label class="block text-slate-700 font-bold mb-1 text-base">詞彙名稱 (廣東話)</label>
+                <input type="text" id="edit-label" class="w-full border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none" placeholder="例如：抽痰、喝水">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-slate-700 font-bold mb-1 text-base">圖示 (Emoji 或 圖片)</label>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="edit-icon" class="flex-grow border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none" placeholder="輸入 Emoji，例如：🌬️">
+                    <button id="edit-camera-btn" type="button" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">📷</span></button>
+                    <button id="edit-gallery-btn" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">🖼️</span></button>
+                </div>
+                <div id="edit-icon-preview" class="h-24 w-24 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center text-5xl overflow-hidden bg-slate-50 mx-auto mt-2"></div>
+                <input type="file" id="edit-camera-input" accept="image/*" capture="environment" class="hidden">
+                <input type="file" id="edit-gallery-input" accept="image/*" class="hidden">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-slate-700 font-bold mb-1 text-base">所屬分類</label>
+                <select id="edit-category" class="w-full border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none bg-white"></select>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-slate-700 font-bold mb-1 text-base">卡片背景顏色</label>
+                <div class="flex items-center gap-3">
+                    <input type="color" id="edit-color" class="w-14 h-12 rounded-xl cursor-pointer border-0 p-0 shadow">
+                    <span class="text-sm text-slate-500">點擊選擇柔和顏色</span>
+                </div>
+            </div>
+            
+            <div class="flex justify-between items-center pt-4 border-t border-slate-200 gap-3">
+                <button id="delete-card-btn" type="button" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl font-bold text-base hidden">刪除卡片</button>
+                <div class="flex gap-2 w-full justify-end">
+                    <button id="cancel-edit-btn" type="button" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2.5 rounded-xl font-bold text-base">取消</button>
+                    <button id="save-card-btn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-base shadow-md">儲存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統一系統提示與警報 Modal -->
+    <div id="system-dialog" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center z-[60] p-4">
+        <div class="bg-white p-6 md:p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h2 id="dialog-title" class="text-2xl font-bold mb-3 text-slate-800">提示</h2>
+            <p id="dialog-message" class="text-lg text-slate-600 mb-5 whitespace-pre-wrap leading-relaxed"></p>
+            <input type="text" id="dialog-input" class="w-full border-2 border-slate-300 p-3 rounded-xl text-lg mb-5 hidden" autocomplete="off">
+            <div class="flex gap-3 justify-end">
+                <button id="dialog-cancel" class="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2.5 rounded-xl font-bold text-base hidden">取消</button>
+                <button id="dialog-confirm" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-base shadow">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🚨 緊急警報視覺全螢幕 Overlay -->
+    <div id="alarm-overlay" class="fixed inset-0 z-[100] hidden flex-col justify-center items-center text-white p-6 text-center">
+        <div class="text-8xl md:text-9xl mb-4 animate-bounce">🚨</div>
+        <h1 class="text-4xl md:text-6xl font-black mb-4">呼叫護士中！</h1>
+        <p class="text-2xl md:text-3xl mb-8 font-bold">PLEASE HELP / 有緊急需要</p>
+        <button id="stop-alarm-btn" class="bg-white text-red-600 hover:bg-slate-100 font-extrabold text-2xl md:text-4xl px-8 py-4 rounded-3xl shadow-2xl border-4 border-red-500 active:scale-95">
+            ✖ 停止警報
+        </button>
+    </div>
+
+    <!-- JavaScript 邏輯 -->
+    <script>
+        /**
+         * 1. 預設 AAC 數據庫
+         */
+        const DEFAULT_AAC_DATA = {
+            categories: ['日常', '感受', '痛楚', '身體', '數字', '時間'],
+            cards: [
+                // 日常
+                { id: '1', label: '抽痰', icon: '🌬️', color: '#ffcdd2', category: '日常' },
+                { id: '2', label: '紙巾', icon: '🧻', color: '#ffecb3', category: '日常' },
+                { id: '3', label: '蓋被', icon: '🛌', color: '#c8e6c9', category: '日常' },
+                { id: '4', label: '想上床', icon: '🛏️', color: '#bbdefb', category: '日常' },
+                { id: '5', label: '熄燈', icon: '💡', color: '#fff9c4', category: '日常' },
+                { id: '6', label: '開窗簾', icon: '🪟', color: '#e1bee7', category: '日常' },
+                { id: '46', label: '關窗簾', icon: '🔽', color: '#e1bee7', category: '日常' },
+                { id: '47', label: '訓覺', icon: '😴', color: '#d1c4e9', category: '日常' },
+                { id: '101', label: '飲水', icon: '🥛', color: '#e0f7fa', category: '日常' },
+                { id: '102', label: '食飯', icon: '🍚', color: '#fff3e0', category: '日常' },
+
+                // 感受
+                { id: '7', label: '好熱', icon: '🥵', color: '#ffccbc', category: '感受' },
+                { id: '8', label: '好凍', icon: '🥶', color: '#b3e5fc', category: '感受' },
+                { id: '10', label: '頭暈', icon: '💫', color: '#dcedc8', category: '感受' },
+                { id: '11', label: '好攰', icon: '😮‍💨', color: '#cfd8dc', category: '感受' },
+                { id: '12', label: '眼瞓', icon: '🥱', color: '#d1c4e9', category: '感受' },
+                { id: '48', label: '開心', icon: '😄', color: '#fff9c4', category: '感受' },
+                { id: '49', label: '傷心', icon: '😢', color: '#bbdefb', category: '感受' },
+                { id: '50', label: '嬲', icon: '😠', color: '#ffccbc', category: '感受' },
+
+                // 痛楚
+                { id: '13', label: '少少痛', icon: '🩹', color: '#fff9c4', category: '痛楚' },
+                { id: '15', label: '好痛', icon: '💥', color: '#ef9a9a', category: '痛楚' },
+                { id: '25', label: '麻痺', icon: '⚡', color: '#fff59d', category: '痛楚' },
+                { id: '26', label: '痕癢', icon: '🐜', color: '#ffecb3', category: '痛楚' },
+                { id: '27', label: '全身唔舒服', icon: '🤒', color: '#ffab91', category: '痛楚' },
+
+                // 身體
+                { id: '16', label: '頭部', icon: '👤', color: '#b2dfdb', category: '身體' },
+                { id: '17', label: '頸部', icon: '🧣', color: '#c5cae9', category: '身體' },
+                { id: '18', label: '喉嚨', icon: '🗣️', color: '#ffccbc', category: '身體' },
+                { id: '19', label: '心口', icon: '🫀', color: '#f8bbd0', category: '身體' },
+                { id: '20', label: '肚', icon: '🤰', color: '#dcedc8', category: '身體' },
+                { id: '21', label: '背脊', icon: '🔙', color: '#cfd8dc', category: '身體' },
+                { id: '22', label: '腰部', icon: '🧍', color: '#e1bee7', category: '身體' },
+                { id: '23', label: '手部', icon: '🖐️', color: '#bbdefb', category: '身體' },
+                { id: '24', label: '腳部', icon: '🦶', color: '#c8e6c9', category: '身體' },
+
+                // 數字
+                { id: '28', label: '1', icon: '1️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '29', label: '2', icon: '2️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '30', label: '3', icon: '3️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '31', label: '4', icon: '4️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '32', label: '5', icon: '5️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '33', label: '6', icon: '6️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '34', label: '7', icon: '7️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '35', label: '8', icon: '8️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '36', label: '9', icon: '9️⃣', color: '#e3f2fd', category: '數字' },
+                { id: '37', label: '10', icon: '🔟', color: '#e3f2fd', category: '數字' },
+
+                // 時間
+                { id: '38', label: '今日', icon: '📅', color: '#e8f5e9', category: '時間' },
+                { id: '39', label: '明日', icon: '⏭️', color: '#e8f5e9', category: '時間' },
+                { id: '40', label: '尋日', icon: '⏮️', color: '#e8f5e9', category: '時間' },
+                { id: '41', label: '朝早', icon: '🌅', color: '#fff3e0', category: '時間' },
+                { id: '42', label: '下午', icon: '☀️', color: '#fff3e0', category: '時間' },
+                { id: '43', label: '夜晚', icon: '🌙', color: '#ede7f6', category: '時間' },
+                { id: '44', label: '依家', icon: '⏱️', color: '#fce4ec', category: '時間' },
+                { id: '45', label: '一陣間', icon: '⏳', color: '#fce4ec', category: '時間' }
+            ]
+        };
+
+        // 全域狀態管理
+        let aacData = loadAACData();
+        let currentCategory = aacData.categories[0] || '日常';
+        let isEditMode = false;
+        let currentEditIconData = ''; 
+        let sentenceList = [];
+        let searchQuery = '';
+        let alarmInterval = null;
+
+        function loadAACData() {
+            try {
+                const saved = localStorage.getItem('aac_board_data');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.cards)) {
+                        return parsed;
+                    }
+                }
+            } catch (e) {
+                console.warn("無法讀取 LocalStorage 設定，使用預設值:", e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_AAC_DATA));
+        }
+
+        function saveAACData() {
+            try {
+                localStorage.setItem('aac_board_data', JSON.stringify(aacData));
+            } catch (e) {
+                console.error("儲存至 LocalStorage 失敗:", e);
+            }
+        }
+
+        /**
+         * 2. 廣東話發音引擎與語音合成 (TTS)
+         */
+        const synth = window.speechSynthesis;
+
+        function speakText(text) {
+            if (!text) return;
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            
+            const utterThis = new SpeechSynthesisUtterance(text);
+            utterThis.lang = 'zh-HK';
+            utterThis.rate = 0.85;
+            utterThis.pitch = 1.0;
+
+            // 尋找最適宜的廣東話 (zh-HK) 語音包
+            const voices = synth.getVoices();
+            const cantoneseVoice = voices.find(v => 
+                v.lang === 'zh-HK' || 
+                v.lang.includes('HK') || 
+                v.name.includes('Hong Kong') || 
+                v.name.includes('Cantonese')
+            );
+            if (cantoneseVoice) {
+                utterThis.voice = cantoneseVoice;
+            }
+
+            synth.speak(utterThis);
+        }
+
+        // 在瀏覽器加載 voices 時觸發準備
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = () => synth.getVoices();
+        }
+
+        /**
+         * 3. 緊急警報發聲器 (Web Audio API)
+         */
+        let audioCtx = null;
+
+        function playEmergencyBeep() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const now = audioCtx.currentTime;
+                createBeepTone(880, now, 0.2);
+                createBeepTone(1760, now, 0.2);
+                createBeepTone(880, now + 0.25, 0.3);
+                createBeepTone(1760, now + 0.25, 0.3);
+            } catch (e) {
+                console.error("Audio Context 錯誤:", e);
+            }
+        }
+
+        function createBeepTone(freq, startTime, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, startTime);
+
+            gain.gain.setValueAtTime(0.4, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        /**
+         * 4. 界面渲染邏輯 (Tabs & Cards)
+         */
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            
+            const categories = aacData.categories;
+            
+            if (categories.length === 0) {
+                currentCategory = '';
+            } else if (!categories.includes(currentCategory)) {
+                currentCategory = categories[0];
+            }
+
+            categories.forEach(category => {
+                const tabEl = document.createElement('div');
+                const isActive = category === currentCategory && !searchQuery;
+                
+                tabEl.className = `flex items-center whitespace-nowrap px-4 md:px-5 py-2 md:py-2.5 rounded-2xl font-bold text-base md:text-xl transition-all cursor-pointer ${
+                    isActive 
+                    ? 'bg-blue-600 text-white shadow-md scale-105' 
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`;
+                
+                tabEl.onclick = () => {
+                    currentCategory = category;
+                    searchQuery = '';
+                    document.getElementById('search-input').value = '';
+                    document.getElementById('clear-search-btn').classList.add('hidden');
+                    renderTabs();
+                    renderCards();
+                };
+
+                const textSpan = document.createElement('span');
+                textSpan.innerText = category;
+                tabEl.appendChild(textSpan);
+
+                if (isEditMode) {
+                    const delBtn = document.createElement('button');
+                    delBtn.innerHTML = '✕';
+                    delBtn.title = '刪除此分類';
+                    delBtn.className = `ml-2.5 px-1.5 py-0.5 rounded-full text-xs flex items-center justify-center h-5 w-5 ${isActive ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-slate-300 hover:bg-slate-400 text-slate-800'}`;
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteCategory(category);
+                    };
+                    tabEl.appendChild(delBtn);
+                }
+                
+                container.appendChild(tabEl);
+
+                if (isActive) {
+                    setTimeout(() => {
+                        tabEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }, 50);
+                }
+            });
+
+            if (isEditMode) {
+                const addBtn = document.createElement('button');
+                addBtn.className = `flex items-center whitespace-nowrap px-4 py-2 rounded-2xl font-bold text-base bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm ml-1`;
+                addBtn.innerText = '➕ 新增分類';
+                addBtn.onclick = () => {
+                    showDialog({
+                        title: '新增分類',
+                        message: '請輸入新分類名稱：',
+                        type: 'prompt',
+                        onConfirm: (newCat) => {
+                            if (newCat && newCat.trim() !== '') {
+                                const catName = newCat.trim();
+                                if (!aacData.categories.includes(catName)) {
+                                    aacData.categories.push(catName);
+                                    currentCategory = catName;
+                                    saveAACData();
+                                    renderTabs();
+                                    renderCards();
+                                } else {
+                                    setTimeout(() => showDialog({ title: '提示', message: '此分類已經存在！' }), 100);
+                                }
+                            }
+                        }
+                    });
+                };
+                container.appendChild(addBtn);
+            }
+        }
+
+        function deleteCategory(catName) {
+            showDialog({
+                title: '刪除分類',
+                message: `確定要刪除「${catName}」分類嗎？\n⚠️ 警告：這會同時刪除該分類下的所有卡片！`,
+                type: 'confirm',
+                onConfirm: () => {
+                    aacData.categories = aacData.categories.filter(c => c !== catName);
+                    aacData.cards = aacData.cards.filter(c => c.category !== catName);
+                    
+                    if (currentCategory === catName) {
+                        currentCategory = aacData.categories.length > 0 ? aacData.categories[0] : '';
+                    }
+                    
+                    saveAACData();
+                    renderTabs();
+                    renderCards();
+                }
+            });
+        }
+
+        function renderCards() {
+            const container = document.getElementById('cards-grid');
+            container.innerHTML = '';
+            
+            if (aacData.categories.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xl md:text-2xl mt-12 font-bold">尚無分類，請點擊「➕ 新增分類」開始。</div>`;
+                return;
+            }
+
+            let cards = [];
+            if (searchQuery.trim()) {
+                const q = searchQuery.trim().toLowerCase();
+                cards = aacData.cards.filter(c => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+            } else {
+                cards = aacData.cards.filter(item => item.category === currentCategory);
+            }
+            
+            if (cards.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xl md:text-2xl mt-12 font-bold">${searchQuery ? '搜尋不到相關卡片' : '此分類下暫無卡片，可進入編輯模式新增。'}</div>`;
+                return;
+            }
+
+            cards.forEach(card => {
+                const cardEl = document.createElement('div');
+                cardEl.className = `
+                    relative flex flex-col items-center justify-center p-3 md:p-5 rounded-3xl shadow-sm border-2 border-white/60
+                    cursor-pointer transition-all duration-100 min-h-[130px] md:min-h-[170px] hover:shadow-md active:scale-95
+                `;
+                cardEl.style.backgroundColor = card.color || '#ffffff';
+                
+                let editOverlay = '';
+                if (isEditMode) {
+                    editOverlay = `<div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-base shadow">✏️</div>`;
+                }
+
+                let iconHtml = '';
+                if (card.icon && card.icon.startsWith('data:image')) {
+                    iconHtml = `<img src="${card.icon}" alt="${card.label}" draggable="false" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl shadow border-2 border-white mb-2 pointer-events-none">`;
+                } else {
+                    iconHtml = `<div class="text-4xl md:text-6xl mb-2 pointer-events-none">${card.icon || '💬'}</div>`;
+                }
+
+                cardEl.innerHTML = `
+                    ${editOverlay}
+                    ${iconHtml}
+                    <div class="text-lg md:text-2xl font-bold text-slate-800 text-center leading-tight tracking-wide pointer-events-none">${card.label}</div>
+                `;
+
+                const triggerAction = (e) => {
+                    e.preventDefault();
+                    if (isEditMode) {
+                        openEditModal(card);
+                    } else {
+                        cardEl.classList.add('card-active');
+                        setTimeout(() => cardEl.classList.remove('card-active'), 120);
+                        
+                        addWordToSentence(card.label);
+                        speakText(card.label);
+                    }
+                };
+
+                cardEl.addEventListener('click', triggerAction);
+
+                container.appendChild(cardEl);
+            });
+        }
+
+        /**
+         * 5. 句子組合列 (Sentence Builder) 邏輯
+         */
+        function addWordToSentence(word) {
+            sentenceList.push(word);
+            renderSentence();
+        }
+
+        function renderSentence() {
+            const container = document.getElementById('sentence-container');
+            if (!container) return;
+            
+            // 當句子清空時，重新放入提示文字標籤，避免節點遺失錯誤
+            if (sentenceList.length === 0) {
+                container.innerHTML = '<span id="sentence-placeholder" class="text-slate-400 text-base md:text-lg select-none">點擊下方卡片組合句子...</span>';
+                return;
+            }
+
+            container.innerHTML = '';
+            
+            sentenceList.forEach((word, index) => {
+                const chip = document.createElement('div');
+                chip.className = 'flex items-center bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl text-base md:text-xl shadow-sm shrink-0 animate-fade-in';
+                chip.innerHTML = `
+                    <span>${word}</span>
+                    <button class="ml-2 text-blue-200 hover:text-white font-normal text-sm" title="移除" onclick="removeWordFromSentence(${index})">✕</button>
+                `;
+                container.appendChild(chip);
+            });
+            
+            // 自動滾動到最後一個詞彙
+            container.scrollLeft = container.scrollWidth;
+        }
+
+        function removeWordFromSentence(index) {
+            sentenceList.splice(index, 1);
+            renderSentence();
+        }
+
+        document.getElementById('play-sentence-btn').addEventListener('click', () => {
+            if (sentenceList.length > 0) {
+                const fullSentence = sentenceList.join('');
+                speakText(fullSentence);
+            }
+        });
+
+        document.getElementById('backspace-sentence-btn').addEventListener('click', () => {
+            sentenceList.pop();
+            renderSentence();
+        });
+
+        document.getElementById('clear-sentence-btn').addEventListener('click', () => {
+            sentenceList = [];
+            renderSentence();
+        });
+
+        /**
+         * 6. 🚨 叫護士緊急警報 (Emergency Nurse Call)
+         */
+        document.getElementById('alarm-btn').addEventListener('click', () => {
+            triggerNurseAlarm();
+        });
+
+        document.getElementById('stop-alarm-btn').addEventListener('click', () => {
+            stopNurseAlarm();
+        });
+
+        function triggerNurseAlarm() {
+            const overlay = document.getElementById('alarm-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex', 'alarm-overlay-active');
+
+            playEmergencyBeep();
+            speakText("叫護士！我有緊急需要！");
+
+            if (alarmInterval) clearInterval(alarmInterval);
+            alarmInterval = setInterval(() => {
+                playEmergencyBeep();
+                speakText("叫護士！我有緊急需要！");
+            }, 2500);
+        }
+
+        function stopNurseAlarm() {
+            const overlay = document.getElementById('alarm-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex', 'alarm-overlay-active');
+
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+            if (synth.speaking) synth.cancel();
+        }
+
+        /**
+         * 7. AI 影像辨識整合 (Gemini 3 Flash Preview)
+         */
+        document.getElementById('ai-camera-btn').addEventListener('click', () => {
+            document.getElementById('camera-capture').click();
+        });
+        document.getElementById('ai-gallery-btn').addEventListener('click', () => {
+            document.getElementById('gallery-upload').click();
+        });
+
+        const handleAIImageUpload = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const loadingEl = document.getElementById('ai-loading');
+            loadingEl.classList.remove('hidden');
+            loadingEl.classList.add('flex');
+
+            try {
+                const base64Image = await compressImage(file, 600);
+                const aiResult = await analyzeImageWithGemini(base64Image);
+                
+                if (!aacData.categories.includes(aiResult.category)) {
+                    aacData.categories.push(aiResult.category);
+                }
+
+                const newCard = {
+                    id: 'id-' + Date.now(),
+                    label: aiResult.label,
+                    icon: base64Image, 
+                    category: aiResult.category,
+                    color: aiResult.color || '#e0f2fe'
+                };
+
+                aacData.cards.push(newCard);
+                currentCategory = newCard.category; 
+
+                saveAACData();
+                renderTabs();
+                renderCards();
+                
+                setTimeout(() => {
+                    showDialog({
+                        title: '辨識成功',
+                        message: `✅ 成功辨識物件為「${aiResult.label}」！\n已自動加入至「${aiResult.category}」分類中。`
+                    });
+                }, 100);
+                
+            } catch (error) {
+                console.error("AI 辨識錯誤:", error);
+                showDialog({ title: '辨識失敗', message: "AI 辨識失敗，請確認 API Key 或網路連線。\n" + error.message });
+            } finally {
+                loadingEl.classList.add('hidden');
+                loadingEl.classList.remove('flex');
+                e.target.value = ''; 
+            }
+        };
+
+        document.getElementById('camera-capture').addEventListener('change', handleAIImageUpload);
+        document.getElementById('gallery-upload').addEventListener('change', handleAIImageUpload);
+
+        function compressImage(file, maxSize) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height && width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        } else if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.onerror = (e) => reject(e);
+                };
+            });
+        }
+
+        async function analyzeImageWithGemini(base64DataUrl) {
+            const apiKey = localStorage.getItem('gemini_api_key') || ""; 
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            const base64Data = base64DataUrl.split(',')[1];
+            const currentCatsStr = aacData.categories.join(', ');
+            
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [
+                        { text: `你是一個 AAC 溝通板的輔助 AI。請辨識這張圖片中的主要物件。請回覆一個 JSON，必須包含以下三個欄位：\n1. "label": 該物件的廣東話口語常用名稱 (例如：水杯、毛巾、抽痰，盡量簡短，不超過4個字)。\n2. "category": 從這幾個分類中選擇最適合的一個：[${currentCatsStr}]。如果都不適合，請自創一個簡短的分類名稱 (例如：食物, 玩具)。\n3. "color": 建議一個柔和適合卡片背景的 Hex 色碼 (例如 #ffcdd2, #bbdefb)。` },
+                        { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            label: { type: "STRING" },
+                            category: { type: "STRING" },
+                            color: { type: "STRING" }
+                        },
+                        required: ["label", "category", "color"]
+                    }
+                }
+            };
+
+            let retries = 3;
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP 錯誤狀態碼: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!textContent) throw new Error("AI 回傳的結果無效");
+                    
+                    return JSON.parse(textContent);
+                } catch (err) {
+                    if (i === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); 
+                }
+            }
+        }
+
+        /**
+         * 8. 編輯模式、 Modal 操作與備份管理
+         */
+        document.getElementById('edit-toggle-btn').addEventListener('click', () => {
+            isEditMode = !isEditMode;
+            document.getElementById('edit-toolbar').classList.toggle('hidden', !isEditMode);
+            renderTabs();  
+            renderCards(); 
+        });
+
+        // 搜尋功能
+        const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('clear-search-btn');
+
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            clearSearchBtn.classList.toggle('hidden', !searchQuery);
+            renderTabs();
+            renderCards();
+        });
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            searchQuery = '';
+            clearSearchBtn.classList.add('hidden');
+            renderTabs();
+            renderCards();
+        });
+
+        // Modal 元件引導
+        const modal = document.getElementById('edit-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const elId = document.getElementById('edit-id');
+        const elLabel = document.getElementById('edit-label');
+        const elIcon = document.getElementById('edit-icon');
+        const elCategory = document.getElementById('edit-category');
+        const elColor = document.getElementById('edit-color');
+        const btnDelete = document.getElementById('delete-card-btn');
+        const elPreview = document.getElementById('edit-icon-preview');
+
+        function updateIconPreview() {
+            if (currentEditIconData.startsWith('data:image')) {
+                elPreview.innerHTML = `<img src="${currentEditIconData}" class="w-full h-full object-cover rounded-2xl">`;
+                elIcon.value = '';
+                elIcon.placeholder = '(已套用自訂圖片)';
+            } else {
+                elPreview.innerHTML = currentEditIconData;
+                elIcon.value = currentEditIconData;
+                elIcon.placeholder = '輸入 Emoji，例如：🌬️';
+            }
+        }
+
+        elIcon.addEventListener('input', (e) => {
+            currentEditIconData = e.target.value.trim();
+            updateIconPreview();
+        });
+
+        document.getElementById('edit-camera-btn').addEventListener('click', () => {
+            document.getElementById('edit-camera-input').click();
+        });
+        document.getElementById('edit-gallery-btn').addEventListener('click', () => {
+            document.getElementById('edit-gallery-input').click();
+        });
+
+        const handleEditImageReplace = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            try {
+                const base64Image = await compressImage(file, 600);
+                currentEditIconData = base64Image;
+                updateIconPreview();
+            } catch (error) {
+                console.error("圖片替換錯誤:", error);
+                showDialog({ title: '錯誤', message: '無法讀取或處理圖片。' });
+            } finally {
+                e.target.value = ''; 
+            }
+        };
+
+        document.getElementById('edit-camera-input').addEventListener('change', handleEditImageReplace);
+        document.getElementById('edit-gallery-input').addEventListener('change', handleEditImageReplace);
+
+        function openEditModal(cardData) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            elCategory.innerHTML = '';
+            aacData.categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                elCategory.appendChild(opt);
+            });
+            
+            if (cardData) {
+                modalTitle.innerText = "修改卡片";
+                elId.value = cardData.id;
+                elLabel.value = cardData.label;
+                currentEditIconData = cardData.icon; 
+                elCategory.value = cardData.category;
+                elColor.value = cardData.color || '#ffffff';
+                
+                btnDelete.classList.remove('hidden');
+            } else {
+                modalTitle.innerText = "新增卡片";
+                elId.value = 'id-' + Date.now(); 
+                elLabel.value = '';
+                currentEditIconData = '💬'; 
+                elCategory.value = currentCategory || aacData.categories[0]; 
+                elColor.value = '#e2e8f0';
+                
+                btnDelete.classList.add('hidden');
+            }
+            
+            updateIconPreview();
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeModal);
+
+        document.getElementById('save-card-btn').addEventListener('click', () => {
+            const id = elId.value;
+            const newCard = {
+                id: id,
+                label: elLabel.value.trim() || '未命名',
+                icon: currentEditIconData || '❓', 
+                category: elCategory.value,
+                color: elColor.value
+            };
+
+            const existingIndex = aacData.cards.findIndex(c => c.id === id);
+            if (existingIndex >= 0) {
+                aacData.cards[existingIndex] = newCard; 
+            } else {
+                aacData.cards.push(newCard); 
+            }
+            
+            currentCategory = newCard.category; 
+            saveAACData();
+            closeModal();
+            renderTabs();
+            renderCards();
+        });
+
+        document.getElementById('delete-card-btn').addEventListener('click', () => {
+            const id = elId.value;
+            showDialog({
+                title: '刪除卡片',
+                message: '確定要刪除這張卡片嗎？',
+                type: 'confirm',
+                onConfirm: () => {
+                    aacData.cards = aacData.cards.filter(c => c.id !== id);
+                    saveAACData();
+                    closeModal();
+                    renderTabs();
+                    renderCards();
+                }
+            });
+        });
+
+        // 匯出 JSON 設定檔
+        document.getElementById('export-json-btn').addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(aacData, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `aac_board_config_${new Date().toISOString().slice(0,10)}.json`);
+            dlAnchorElem.click();
+        });
+
+        // 匯入 JSON 設定檔
+        document.getElementById('import-json-btn').addEventListener('click', () => {
+            document.getElementById('import-json-input').click();
+        });
+
+        document.getElementById('import-json-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (imported && Array.isArray(imported.categories) && Array.isArray(imported.cards)) {
+                        aacData = imported;
+                        saveAACData();
+                        currentCategory = aacData.categories[0] || '';
+                        renderTabs();
+                        renderCards();
+                        showDialog({ title: '匯入成功', message: '已成功載入溝通板設定！' });
+                    } else {
+                        throw new Error("格式不符合 AAC 格式規定");
+                    }
+                } catch (err) {
+                    showDialog({ title: '匯入失敗', message: '無法讀取 JSON 檔案：' + err.message });
+                } finally {
+                    e.target.value = '';
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // 重設至預設數據
+        document.getElementById('reset-default-btn').addEventListener('click', () => {
+            showDialog({
+                title: '重設預設值',
+                message: '確定要將所有卡片與分類恢復為預設狀態嗎？\n⚠️ 此操作會覆蓋所有自訂修改！',
+                type: 'confirm',
+                onConfirm: () => {
+                    aacData = JSON.parse(JSON.stringify(DEFAULT_AAC_DATA));
+                    saveAACData();
+                    currentCategory = aacData.categories[0];
+                    renderTabs();
+                    renderCards();
+                    showDialog({ title: '重設成功', message: '溝通板已恢復為系統預設值。' });
+                }
+            });
+        });
+
+        // 設定 Gemini API Key
+        document.getElementById('api-key-btn').addEventListener('click', () => {
+            const currentKey = localStorage.getItem('gemini_api_key') || '';
+            showDialog({
+                title: '設定 Gemini API 金鑰',
+                message: '請輸入你的 Google Gemini API Key 以啟用 AI 拍照/圖庫物件自動辨識功能：',
+                type: 'prompt',
+                defaultValue: currentKey,
+                onConfirm: (newKey) => {
+                    if (newKey !== null) {
+                        localStorage.setItem('gemini_api_key', newKey.trim());
+                        setTimeout(() => showDialog({ title: '已儲存', message: 'Gemini API 金鑰設定已成功儲存！' }), 100);
+                    }
+                }
+            });
+        });
+
+        /**
+         * 9. 通用系統提示視窗 (Dialog System)
+         */
+        function showDialog({ title, message, type = 'alert', defaultValue = '', onConfirm = null }) {
+            const dialog = document.getElementById('system-dialog');
+            const titleEl = document.getElementById('dialog-title');
+            const msgEl = document.getElementById('dialog-message');
+            const inputEl = document.getElementById('dialog-input');
+            const cancelBtn = document.getElementById('dialog-cancel');
+            const confirmBtn = document.getElementById('dialog-confirm');
+
+            titleEl.innerText = title || '提示';
+            msgEl.innerText = message || '';
+
+            inputEl.classList.add('hidden');
+            inputEl.value = defaultValue;
+            cancelBtn.classList.add('hidden');
+            
+            if (type === 'prompt') {
+                inputEl.classList.remove('hidden');
+                cancelBtn.classList.remove('hidden');
+                setTimeout(() => inputEl.focus(), 100);
+            } else if (type === 'confirm') {
+                cancelBtn.classList.remove('hidden');
+            }
+
+            const closeDialog = () => {
+                dialog.classList.add('hidden');
+                dialog.classList.remove('flex');
+                confirmBtn.onclick = null;
+                cancelBtn.onclick = null;
+            };
+
+            confirmBtn.onclick = () => {
+                let val = true;
+                if (type === 'prompt') val = inputEl.value;
+                closeDialog();
+                if (onConfirm) onConfirm(val);
+            };
+
+            cancelBtn.onclick = closeDialog;
+
+            dialog.classList.remove('hidden');
+            dialog.classList.add('flex');
+        }
+
+        /**
+         * 10. 初始化執行
+         */
+        renderTabs();
+        renderCards();
+
+    </script>
+</body>
+</html>
