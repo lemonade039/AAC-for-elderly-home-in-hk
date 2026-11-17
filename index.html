@@ -68,7 +68,7 @@
             
             <!-- 詞彙積木顯示區 -->
             <div id="sentence-container" class="flex-grow flex gap-2 overflow-x-auto no-scrollbar min-h-[52px] items-center px-3 py-1 bg-white rounded-2xl border-2 border-blue-200 shadow-inner">
-                <span id="sentence-placeholder" class="text-slate-400 text-base md:text-lg">點擊下方卡片組合句子...</span>
+                <span class="text-slate-400 text-base md:text-lg">點擊下方卡片組合句子...</span>
             </div>
             
             <!-- 播放與清理按鈕群 -->
@@ -92,17 +92,12 @@
             </span>
             <div class="flex gap-2 flex-wrap items-center">
                 <!-- 隱藏的檔案上傳元件 -->
-                <input type="file" id="camera-capture" accept="image/*" capture="environment" class="hidden">
-                <input type="file" id="gallery-upload" accept="image/*" class="hidden">
                 <input type="file" id="import-json-input" accept=".json" class="hidden">
                 
-                <button id="ai-camera-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">📷 影相 AI 新增</button>
-                <button id="ai-gallery-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🖼️ 相簿 AI 新增</button>
                 <button id="add-card-btn" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">➕ 新增卡片</button>
                 <button id="export-json-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">💾 匯出設定</button>
                 <button id="import-json-btn" class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">📂 匯入設定</button>
                 <button id="reset-default-btn" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🔄 重設預設</button>
-                <button id="api-key-btn" class="bg-slate-700 hover:bg-slate-800 text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-bold shadow active:scale-95">🔑 AI 金鑰</button>
             </div>
         </div>
 
@@ -110,7 +105,7 @@
         <div class="px-3 md:px-6 py-2 bg-slate-50 border-b border-slate-200 flex items-center gap-2">
             <span class="text-slate-400">🔍</span>
             <input type="text" id="search-input" placeholder="搜尋卡片詞彙..." class="w-full bg-white border border-slate-300 rounded-xl px-3 py-1 text-base focus:outline-none focus:border-blue-500">
-            <button id="clear-search-btn" class="text-slate-400 hover:text-slate-600 hidden">✕</button>
+            <button id="clear-search-btn" class="text-slate-400 hover:text-slate-600 hidden px-2 font-bold">✕</button>
         </div>
     </header>
 
@@ -118,12 +113,6 @@
     <main class="flex-grow overflow-y-auto p-3 md:p-6 bg-slate-100 relative no-scrollbar">
         <div id="cards-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-5 pb-8">
             <!-- 卡片將由 JavaScript 動態生成 -->
-        </div>
-
-        <!-- AI 處理中的 Loading 畫面 -->
-        <div id="ai-loading" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm flex flex-col justify-center items-center z-40 p-6">
-            <div class="animate-spin rounded-full h-16 w-16 border-4 border-purple-600 border-t-transparent mb-4"></div>
-            <p class="text-xl font-bold text-purple-900 text-center" id="ai-loading-text">Gemini AI 正在分析影像物件，請稍候...</p>
         </div>
     </main>
 
@@ -135,16 +124,25 @@
             
             <div class="mb-4">
                 <label class="block text-slate-700 font-bold mb-1 text-base">詞彙名稱 (廣東話)</label>
-                <input type="text" id="edit-label" class="w-full border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none" placeholder="例如：抽痰、喝水">
+                <input type="text" id="edit-label" class="w-full border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none" placeholder="例如：抽痰、飲水">
             </div>
             
             <div class="mb-4">
-                <label class="block text-slate-700 font-bold mb-1 text-base">圖示 (Emoji 或 圖片)</label>
+                <label class="block text-slate-700 font-bold mb-1 text-base">圖示 (選擇 Emoji、影相或相簿上傳)</label>
                 <div class="flex gap-2 mb-2">
                     <input type="text" id="edit-icon" class="flex-grow border-2 border-slate-300 p-3 rounded-xl text-lg focus:border-blue-500 focus:outline-none" placeholder="輸入 Emoji，例如：🌬️">
-                    <button id="edit-camera-btn" type="button" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">📷</span></button>
-                    <button id="edit-gallery-btn" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">🖼️</span></button>
+                    <button id="edit-camera-btn" type="button" title="影相" class="bg-purple-600 hover:bg-purple-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">📷</span></button>
+                    <button id="edit-gallery-btn" type="button" title="從相簿選擇" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-xl font-bold shadow"><span class="text-xl">🖼️</span></button>
                 </div>
+
+                <!-- 預設常用 Emoji 快捷選擇區 -->
+                <div class="mb-2">
+                    <span class="text-xs font-bold text-slate-500 block mb-1">點擊快速選擇常用圖示 (可上下滑動)：</span>
+                    <div id="preset-emojis-container" class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto p-2 bg-slate-100 rounded-xl border border-slate-200">
+                        <!-- 由 JavaScript 動態生成預設 Emoji -->
+                    </div>
+                </div>
+
                 <div id="edit-icon-preview" class="h-24 w-24 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center text-5xl overflow-hidden bg-slate-50 mx-auto mt-2"></div>
                 <input type="file" id="edit-camera-input" accept="image/*" capture="environment" class="hidden">
                 <input type="file" id="edit-gallery-input" accept="image/*" class="hidden">
@@ -199,14 +197,48 @@
     <!-- JavaScript 邏輯 -->
     <script>
         /**
-         * 1. 預設 AAC 數據庫
+         * ==========================================
+         * 1. 預設 AAC 數據庫與常數設定
+         * ==========================================
          */
+        const STORAGE_KEY = 'aac_cantonese_board_v2';
+        const PROTECTED_CATEGORIES = ['人物', '日常', '物件', '感受', '痛楚', '身體', '數字', '時間'];
+        const EDIT_MODE_PASSWORD = '0000';
+
+        // 超過 120 個日常生活、護理、飲食、人物與情緒常用 Emoji
+        const PRESET_EMOJIS = [
+            // 人物與社交
+            '🙋', '👉', '👨‍👩‍👧‍👦', '👩‍⚕️', '🩺', '🧑‍⚕️', '🤝', '👴', '👵', '👨', '👩', '👶', '🙏', '👍', '👎', '👋', '❤️', '💬',
+            // 日常護理與醫療
+            '🌬️', '🚿', '🛁', '🚽', '🧻', '🪥', '🧼', '🧴', '🪒', '💊', '💉', '🩹', '🌡️', '🩻', '🦽', '🩼', '🛏️', '🛌', '🩲',
+            // 飲食與餐具
+            '🥛', '🥤', '☕', '🍵', '🧃', '💧', '🍚', '🍜', '🍲', '🥣', '🍞', '🥟', '🍗', '🐟', '🥬', '🍎', '🍌', '🍊', '🍉', '🍇', '🍰', '🍪', '🍫', '🍬', '🥄', '🥢', '🍽️',
+            // 居家與物件
+            '📺', '📱', '☎️', '📻', '🎛️', '💡', '🔦', '🕯️', '🪟', '🚪', '🪑', '🛋️', '👓', '🕶️', '⌚', '⏰', '🔑', '🧣', '🧤', '🧦', '👕', '👖', '🧥', '👟', '🎒', '👜', '☂️', '🪭', '❄️', '🔥',
+            // 身體與疼痛
+            '👤', '🧠', '👀', '👂', '👃', '👄', '🦷', '👅', '🗣️', '🫀', '🫁', '🤰', '🔙', '🧍', '🖐️', '💪', '🦵', '🦶', '🩸', '💥', '⚡', '🐜', '🤒', '🤕', '🤢', '🤮', '🤧', '😷',
+            // 情緒與感受
+            '😄', '😊', '🥰', '😂', '😢', '😭', '😠', '😡', '😨', '😰', '🥵', '🥶', '💫', '😮‍💨', '🥱', '😴', '🤔', '🥺', '😌',
+            // 娛樂、時間與天氣
+            '📖', '📰', '🎵', '🎶', '🎨', '🧩', '🃏', 'mahjong', '🀄', '🚶', '🌳', '🌸', '☀️', '🌤️', '🌧️', '⛈️', '🌙', '⭐', '📅', '⏱️', '⏳', '✅', '❌', '❓', '❗'
+        ].filter(item => item !== 'mahjong');
+
         const DEFAULT_AAC_DATA = {
-            categories: ['日常', '感受', '痛楚', '身體', '數字', '時間'],
+            categories: ['人物', '日常', '物件', '感受', '痛楚', '身體', '數字', '時間'],
             cards: [
+                // 人物
+                { id: '201', label: '我', icon: '🙋', color: '#e3f2fd', category: '人物' },
+                { id: '202', label: '你', icon: '👉', color: '#e3f2fd', category: '人物' },
+                { id: '203', label: '屋企人', icon: '👨‍👩‍👧‍👦', color: '#fce4ec', category: '人物' },
+                { id: '204', label: '護士', icon: '👩‍⚕️', color: '#e8f5e9', category: '人物' },
+                { id: '205', label: '醫生', icon: '🩺', color: '#e0f2f1', category: '人物' },
+                { id: '206', label: '治療師', icon: '🧑‍⚕️', color: '#fff3e0', category: '人物' },
+                { id: '207', label: '照顧員', icon: '🤝', color: '#f3e5f5', category: '人物' },
+
                 // 日常
                 { id: '1', label: '抽痰', icon: '🌬️', color: '#ffcdd2', category: '日常' },
-                { id: '2', label: '紙巾', icon: '🧻', color: '#ffecb3', category: '日常' },
+                { id: '103', label: '沖涼', icon: '🚿', color: '#b3e5fc', category: '日常' },
+                { id: '104', label: '睇電視', icon: '📺', color: '#d1c4e9', category: '日常' },
                 { id: '3', label: '蓋被', icon: '🛌', color: '#c8e6c9', category: '日常' },
                 { id: '4', label: '想上床', icon: '🛏️', color: '#bbdefb', category: '日常' },
                 { id: '5', label: '熄燈', icon: '💡', color: '#fff9c4', category: '日常' },
@@ -215,6 +247,15 @@
                 { id: '47', label: '訓覺', icon: '😴', color: '#d1c4e9', category: '日常' },
                 { id: '101', label: '飲水', icon: '🥛', color: '#e0f7fa', category: '日常' },
                 { id: '102', label: '食飯', icon: '🍚', color: '#fff3e0', category: '日常' },
+
+                // 物件
+                { id: '2', label: '紙巾', icon: '🧻', color: '#ffecb3', category: '物件' },
+                { id: '301', label: '水杯', icon: '🥤', color: '#e0f7fa', category: '物件' },
+                { id: '302', label: '眼鏡', icon: '👓', color: '#e8eaf6', category: '物件' },
+                { id: '303', label: '電話', icon: '📱', color: '#e1f5fe', category: '物件' },
+                { id: '304', label: '遙控器', icon: '🎛️', color: '#f3e5f5', category: '物件' },
+                { id: '305', label: '毛巾', icon: '🧣', color: '#e0f2f1', category: '物件' },
+                { id: '306', label: '尿片', icon: '🩲', color: '#fff9c4', category: '物件' },
 
                 // 感受
                 { id: '7', label: '好熱', icon: '🥵', color: '#ffccbc', category: '感受' },
@@ -255,7 +296,7 @@
                 { id: '35', label: '8', icon: '8️⃣', color: '#e3f2fd', category: '數字' },
                 { id: '36', label: '9', icon: '9️⃣', color: '#e3f2fd', category: '數字' },
                 { id: '37', label: '10', icon: '🔟', color: '#e3f2fd', category: '數字' },
-
+                
                 // 時間
                 { id: '38', label: '今日', icon: '📅', color: '#e8f5e9', category: '時間' },
                 { id: '39', label: '明日', icon: '⏭️', color: '#e8f5e9', category: '時間' },
@@ -268,124 +309,56 @@
             ]
         };
 
-        // 全域狀態管理
-        let aacData = loadAACData();
-        let currentCategory = aacData.categories[0] || '日常';
+        /**
+         * ==========================================
+         * 2. 系統狀態與儲存管理
+         * ==========================================
+         */
+        let aacData = loadDataFromStorage();
+        let currentCategory = aacData.categories[0] || '人物';
         let isEditMode = false;
-        let currentEditIconData = ''; 
+        let currentEditIconData = '';
         let sentenceList = [];
         let searchQuery = '';
         let alarmInterval = null;
 
-        function loadAACData() {
+        function loadDataFromStorage() {
             try {
-                const saved = localStorage.getItem('aac_board_data');
+                const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) {
                     const parsed = JSON.parse(saved);
-                    if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.cards)) {
+                    if (Array.isArray(parsed.categories) && Array.isArray(parsed.cards)) {
                         return parsed;
                     }
                 }
             } catch (e) {
-                console.warn("無法讀取 LocalStorage 設定，使用預設值:", e);
+                console.error("讀取本地儲存失敗:", e);
             }
             return JSON.parse(JSON.stringify(DEFAULT_AAC_DATA));
         }
 
-        function saveAACData() {
+        function saveDataToStorage() {
             try {
-                localStorage.setItem('aac_board_data', JSON.stringify(aacData));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(aacData));
             } catch (e) {
-                console.error("儲存至 LocalStorage 失敗:", e);
+                console.error("儲存到本地失敗 (可能圖片過大):", e);
+                showDialog({
+                    title: '儲存空間不足',
+                    message: '本地儲存空間已滿，建議點擊「💾 匯出設定」備份資料，或減少高解析度相片數量。'
+                });
             }
         }
 
         /**
-         * 2. 廣東話發音引擎與語音合成 (TTS)
-         */
-        const synth = window.speechSynthesis;
-
-        function speakText(text) {
-            if (!text) return;
-            if (synth.speaking) {
-                synth.cancel();
-            }
-            
-            const utterThis = new SpeechSynthesisUtterance(text);
-            utterThis.lang = 'zh-HK';
-            utterThis.rate = 0.85;
-            utterThis.pitch = 1.0;
-
-            // 尋找最適宜的廣東話 (zh-HK) 語音包
-            const voices = synth.getVoices();
-            const cantoneseVoice = voices.find(v => 
-                v.lang === 'zh-HK' || 
-                v.lang.includes('HK') || 
-                v.name.includes('Hong Kong') || 
-                v.name.includes('Cantonese')
-            );
-            if (cantoneseVoice) {
-                utterThis.voice = cantoneseVoice;
-            }
-
-            synth.speak(utterThis);
-        }
-
-        // 在瀏覽器加載 voices 時觸發準備
-        if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = () => synth.getVoices();
-        }
-
-        /**
-         * 3. 緊急警報發聲器 (Web Audio API)
-         */
-        let audioCtx = null;
-
-        function playEmergencyBeep() {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-
-                const now = audioCtx.currentTime;
-                createBeepTone(880, now, 0.2);
-                createBeepTone(1760, now, 0.2);
-                createBeepTone(880, now + 0.25, 0.3);
-                createBeepTone(1760, now + 0.25, 0.3);
-            } catch (e) {
-                console.error("Audio Context 錯誤:", e);
-            }
-        }
-
-        function createBeepTone(freq, startTime, duration) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, startTime);
-
-            gain.gain.setValueAtTime(0.4, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        }
-
-        /**
-         * 4. 界面渲染邏輯 (Tabs & Cards)
+         * ==========================================
+         * 3. 渲染 UI 函數 (分類標籤與卡片網格)
+         * ==========================================
          */
         function renderTabs() {
             const container = document.getElementById('tabs-container');
             container.innerHTML = '';
-            
+
             const categories = aacData.categories;
-            
             if (categories.length === 0) {
                 currentCategory = '';
             } else if (!categories.includes(currentCategory)) {
@@ -395,18 +368,18 @@
             categories.forEach(category => {
                 const tabEl = document.createElement('div');
                 const isActive = category === currentCategory && !searchQuery;
-                
-                tabEl.className = `flex items-center whitespace-nowrap px-4 md:px-5 py-2 md:py-2.5 rounded-2xl font-bold text-base md:text-xl transition-all cursor-pointer ${
-                    isActive 
-                    ? 'bg-blue-600 text-white shadow-md scale-105' 
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+
+                tabEl.className = `flex items-center whitespace-nowrap px-4 py-2 md:px-5 md:py-2.5 rounded-2xl font-bold text-lg md:text-xl transition-all cursor-pointer shrink-0 ${
+                    isActive
+                        ? 'bg-blue-600 text-white shadow-md scale-[1.02]'
+                        : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300'
                 }`;
-                
+
                 tabEl.onclick = () => {
-                    currentCategory = category;
                     searchQuery = '';
                     document.getElementById('search-input').value = '';
                     document.getElementById('clear-search-btn').classList.add('hidden');
+                    currentCategory = category;
                     renderTabs();
                     renderCards();
                 };
@@ -415,18 +388,21 @@
                 textSpan.innerText = category;
                 tabEl.appendChild(textSpan);
 
-                if (isEditMode) {
+                // 編輯模式下，僅非受保護分類顯示刪除按鈕
+                if (isEditMode && !PROTECTED_CATEGORIES.includes(category)) {
                     const delBtn = document.createElement('button');
-                    delBtn.innerHTML = '✕';
-                    delBtn.title = '刪除此分類';
-                    delBtn.className = `ml-2.5 px-1.5 py-0.5 rounded-full text-xs flex items-center justify-center h-5 w-5 ${isActive ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-slate-300 hover:bg-slate-400 text-slate-800'}`;
+                    delBtn.innerHTML = '✖';
+                    delBtn.title = '刪除此自訂分類';
+                    delBtn.className = `ml-2.5 rounded-full text-xs flex items-center justify-center h-6 w-6 transition-colors ${
+                        isActive ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-slate-300 hover:bg-slate-400 text-slate-800'
+                    }`;
                     delBtn.onclick = (e) => {
                         e.stopPropagation();
                         deleteCategory(category);
                     };
                     tabEl.appendChild(delBtn);
                 }
-                
+
                 container.appendChild(tabEl);
 
                 if (isActive) {
@@ -438,11 +414,11 @@
 
             if (isEditMode) {
                 const addBtn = document.createElement('button');
-                addBtn.className = `flex items-center whitespace-nowrap px-4 py-2 rounded-2xl font-bold text-base bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm ml-1`;
+                addBtn.className = 'flex items-center whitespace-nowrap px-4 py-2 rounded-2xl font-bold text-base md:text-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm ml-1 shrink-0';
                 addBtn.innerText = '➕ 新增分類';
                 addBtn.onclick = () => {
                     showDialog({
-                        title: '新增分類',
+                        title: '新增自訂分類',
                         message: '請輸入新分類名稱：',
                         type: 'prompt',
                         onConfirm: (newCat) => {
@@ -451,7 +427,7 @@
                                 if (!aacData.categories.includes(catName)) {
                                     aacData.categories.push(catName);
                                     currentCategory = catName;
-                                    saveAACData();
+                                    saveDataToStorage();
                                     renderTabs();
                                     renderCards();
                                 } else {
@@ -466,6 +442,8 @@
         }
 
         function deleteCategory(catName) {
+            if (PROTECTED_CATEGORIES.includes(catName)) return;
+
             showDialog({
                 title: '刪除分類',
                 message: `確定要刪除「${catName}」分類嗎？\n⚠️ 警告：這會同時刪除該分類下的所有卡片！`,
@@ -473,12 +451,10 @@
                 onConfirm: () => {
                     aacData.categories = aacData.categories.filter(c => c !== catName);
                     aacData.cards = aacData.cards.filter(c => c.category !== catName);
-                    
                     if (currentCategory === catName) {
-                        currentCategory = aacData.categories.length > 0 ? aacData.categories[0] : '';
+                        currentCategory = aacData.categories[0] || '';
                     }
-                    
-                    saveAACData();
+                    saveDataToStorage();
                     renderTabs();
                     renderCards();
                 }
@@ -488,49 +464,50 @@
         function renderCards() {
             const container = document.getElementById('cards-grid');
             container.innerHTML = '';
-            
-            if (aacData.categories.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xl md:text-2xl mt-12 font-bold">尚無分類，請點擊「➕ 新增分類」開始。</div>`;
-                return;
-            }
 
-            let cards = [];
-            if (searchQuery.trim()) {
-                const q = searchQuery.trim().toLowerCase();
-                cards = aacData.cards.filter(c => c.label.toLowerCase().includes(q) || c.category.toLowerCase().includes(q));
+            let cardsToShow = [];
+            if (searchQuery.trim() !== '') {
+                const kw = searchQuery.trim().toLowerCase();
+                cardsToShow = aacData.cards.filter(c => c.label.toLowerCase().includes(kw));
             } else {
-                cards = aacData.cards.filter(item => item.category === currentCategory);
+                cardsToShow = aacData.cards.filter(c => c.category === currentCategory);
             }
-            
-            if (cards.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xl md:text-2xl mt-12 font-bold">${searchQuery ? '搜尋不到相關卡片' : '此分類下暫無卡片，可進入編輯模式新增。'}</div>`;
+
+            if (cardsToShow.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-slate-400 text-xl md:text-2xl mt-12">找不到符合的卡片。</div>`;
                 return;
             }
 
-            cards.forEach(card => {
+            cardsToShow.forEach(card => {
                 const cardEl = document.createElement('div');
                 cardEl.className = `
-                    relative flex flex-col items-center justify-center p-3 md:p-5 rounded-3xl shadow-sm border-2 border-white/60
-                    cursor-pointer transition-all duration-100 min-h-[130px] md:min-h-[170px] hover:shadow-md active:scale-95
+                    relative flex flex-col items-center justify-center p-4 md:p-5 rounded-3xl shadow-sm border-2 border-white/80
+                    cursor-pointer transition-all duration-100 min-h-[145px] md:min-h-[180px] hover:shadow-md
                 `;
                 cardEl.style.backgroundColor = card.color || '#ffffff';
-                
+
                 let editOverlay = '';
                 if (isEditMode) {
-                    editOverlay = `<div class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 text-base shadow">✏️</div>`;
+                    editOverlay = `<div class="absolute top-2.5 right-2.5 bg-white/90 rounded-full p-1.5 text-base md:text-lg shadow">✏️</div>`;
+                }
+
+                let categoryBadge = '';
+                if (searchQuery.trim() !== '') {
+                    categoryBadge = `<span class="absolute top-2.5 left-2.5 bg-slate-800/70 text-white text-xs px-2 py-0.5 rounded-full">${card.category}</span>`;
                 }
 
                 let iconHtml = '';
                 if (card.icon && card.icon.startsWith('data:image')) {
-                    iconHtml = `<img src="${card.icon}" alt="${card.label}" draggable="false" class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-2xl shadow border-2 border-white mb-2 pointer-events-none">`;
+                    iconHtml = `<img src="${card.icon}" alt="${card.label}" draggable="false" class="w-20 h-20 md:w-24 md:h-24 object-cover rounded-2xl shadow border-2 border-white mb-2 md:mb-3 pointer-events-none">`;
                 } else {
-                    iconHtml = `<div class="text-4xl md:text-6xl mb-2 pointer-events-none">${card.icon || '💬'}</div>`;
+                    iconHtml = `<div class="text-5xl md:text-6xl mb-2 md:mb-3 pointer-events-none leading-none">${card.icon || '💬'}</div>`;
                 }
 
                 cardEl.innerHTML = `
                     ${editOverlay}
+                    ${categoryBadge}
                     ${iconHtml}
-                    <div class="text-lg md:text-2xl font-bold text-slate-800 text-center leading-tight tracking-wide pointer-events-none">${card.label}</div>
+                    <div class="text-xl md:text-2xl font-extrabold text-slate-800 text-center leading-tight tracking-wide pointer-events-none">${card.label}</div>
                 `;
 
                 const triggerAction = (e) => {
@@ -539,21 +516,21 @@
                         openEditModal(card);
                     } else {
                         cardEl.classList.add('card-active');
-                        setTimeout(() => cardEl.classList.remove('card-active'), 120);
-                        
+                        setTimeout(() => cardEl.classList.remove('card-active'), 150);
                         addWordToSentence(card.label);
                         speakText(card.label);
                     }
                 };
 
                 cardEl.addEventListener('click', triggerAction);
-
                 container.appendChild(cardEl);
             });
         }
 
         /**
-         * 5. 句子組合列 (Sentence Builder) 邏輯
+         * ==========================================
+         * 4. 句子組合列 (Sentence Builder) 邏輯
+         * ==========================================
          */
         function addWordToSentence(word) {
             sentenceList.push(word);
@@ -562,45 +539,52 @@
 
         function renderSentence() {
             const container = document.getElementById('sentence-container');
-            if (!container) return;
-            
-            // 當句子清空時，重新放入提示文字標籤，避免節點遺失錯誤
+            container.innerHTML = '';
+
             if (sentenceList.length === 0) {
-                container.innerHTML = '<span id="sentence-placeholder" class="text-slate-400 text-base md:text-lg select-none">點擊下方卡片組合句子...</span>';
+                const placeholder = document.createElement('span');
+                placeholder.className = 'text-slate-400 text-base md:text-lg';
+                placeholder.innerText = '點擊下方卡片組合句子...';
+                container.appendChild(placeholder);
                 return;
             }
 
-            container.innerHTML = '';
-            
             sentenceList.forEach((word, index) => {
                 const chip = document.createElement('div');
-                chip.className = 'flex items-center bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl text-base md:text-xl shadow-sm shrink-0 animate-fade-in';
-                chip.innerHTML = `
-                    <span>${word}</span>
-                    <button class="ml-2 text-blue-200 hover:text-white font-normal text-sm" title="移除" onclick="removeWordFromSentence(${index})">✕</button>
-                `;
+                chip.className = 'flex items-center bg-blue-600 text-white font-bold px-3 py-1.5 rounded-xl text-base md:text-xl shadow-sm shrink-0';
+
+                const wordSpan = document.createElement('span');
+                wordSpan.innerText = word;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'ml-2 text-blue-200 hover:text-white font-bold px-1';
+                removeBtn.innerText = '✕';
+                removeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    sentenceList.splice(index, 1);
+                    renderSentence();
+                };
+
+                chip.appendChild(wordSpan);
+                chip.appendChild(removeBtn);
                 container.appendChild(chip);
             });
-            
-            // 自動滾動到最後一個詞彙
-            container.scrollLeft = container.scrollWidth;
-        }
 
-        function removeWordFromSentence(index) {
-            sentenceList.splice(index, 1);
-            renderSentence();
+            container.scrollLeft = container.scrollWidth;
         }
 
         document.getElementById('play-sentence-btn').addEventListener('click', () => {
             if (sentenceList.length > 0) {
-                const fullSentence = sentenceList.join('');
-                speakText(fullSentence);
+                speakText(sentenceList.join(' '));
             }
         });
 
         document.getElementById('backspace-sentence-btn').addEventListener('click', () => {
-            sentenceList.pop();
-            renderSentence();
+            if (sentenceList.length > 0) {
+                sentenceList.pop();
+                renderSentence();
+            }
         });
 
         document.getElementById('clear-sentence-btn').addEventListener('click', () => {
@@ -609,220 +593,247 @@
         });
 
         /**
-         * 6. 🚨 叫護士緊急警報 (Emergency Nurse Call)
+         * ==========================================
+         * 5. 搜尋列過濾邏輯
+         * ==========================================
          */
-        document.getElementById('alarm-btn').addEventListener('click', () => {
-            triggerNurseAlarm();
-        });
-
-        document.getElementById('stop-alarm-btn').addEventListener('click', () => {
-            stopNurseAlarm();
-        });
-
-        function triggerNurseAlarm() {
-            const overlay = document.getElementById('alarm-overlay');
-            overlay.classList.remove('hidden');
-            overlay.classList.add('flex', 'alarm-overlay-active');
-
-            playEmergencyBeep();
-            speakText("叫護士！我有緊急需要！");
-
-            if (alarmInterval) clearInterval(alarmInterval);
-            alarmInterval = setInterval(() => {
-                playEmergencyBeep();
-                speakText("叫護士！我有緊急需要！");
-            }, 2500);
-        }
-
-        function stopNurseAlarm() {
-            const overlay = document.getElementById('alarm-overlay');
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex', 'alarm-overlay-active');
-
-            if (alarmInterval) {
-                clearInterval(alarmInterval);
-                alarmInterval = null;
-            }
-            if (synth.speaking) synth.cancel();
-        }
-
-        /**
-         * 7. AI 影像辨識整合 (Gemini 3 Flash Preview)
-         */
-        document.getElementById('ai-camera-btn').addEventListener('click', () => {
-            document.getElementById('camera-capture').click();
-        });
-        document.getElementById('ai-gallery-btn').addEventListener('click', () => {
-            document.getElementById('gallery-upload').click();
-        });
-
-        const handleAIImageUpload = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const loadingEl = document.getElementById('ai-loading');
-            loadingEl.classList.remove('hidden');
-            loadingEl.classList.add('flex');
-
-            try {
-                const base64Image = await compressImage(file, 600);
-                const aiResult = await analyzeImageWithGemini(base64Image);
-                
-                if (!aacData.categories.includes(aiResult.category)) {
-                    aacData.categories.push(aiResult.category);
-                }
-
-                const newCard = {
-                    id: 'id-' + Date.now(),
-                    label: aiResult.label,
-                    icon: base64Image, 
-                    category: aiResult.category,
-                    color: aiResult.color || '#e0f2fe'
-                };
-
-                aacData.cards.push(newCard);
-                currentCategory = newCard.category; 
-
-                saveAACData();
-                renderTabs();
-                renderCards();
-                
-                setTimeout(() => {
-                    showDialog({
-                        title: '辨識成功',
-                        message: `✅ 成功辨識物件為「${aiResult.label}」！\n已自動加入至「${aiResult.category}」分類中。`
-                    });
-                }, 100);
-                
-            } catch (error) {
-                console.error("AI 辨識錯誤:", error);
-                showDialog({ title: '辨識失敗', message: "AI 辨識失敗，請確認 API Key 或網路連線。\n" + error.message });
-            } finally {
-                loadingEl.classList.add('hidden');
-                loadingEl.classList.remove('flex');
-                e.target.value = ''; 
-            }
-        };
-
-        document.getElementById('camera-capture').addEventListener('change', handleAIImageUpload);
-        document.getElementById('gallery-upload').addEventListener('change', handleAIImageUpload);
-
-        function compressImage(file, maxSize) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        let width = img.width;
-                        let height = img.height;
-                        
-                        if (width > height && width > maxSize) {
-                            height *= maxSize / width;
-                            width = maxSize;
-                        } else if (height > maxSize) {
-                            width *= maxSize / height;
-                            height = maxSize;
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
-                    };
-                    img.onerror = (e) => reject(e);
-                };
-            });
-        }
-
-        async function analyzeImageWithGemini(base64DataUrl) {
-            const apiKey = localStorage.getItem('gemini_api_key') || ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
-            
-            const base64Data = base64DataUrl.split(',')[1];
-            const currentCatsStr = aacData.categories.join(', ');
-            
-            const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [
-                        { text: `你是一個 AAC 溝通板的輔助 AI。請辨識這張圖片中的主要物件。請回覆一個 JSON，必須包含以下三個欄位：\n1. "label": 該物件的廣東話口語常用名稱 (例如：水杯、毛巾、抽痰，盡量簡短，不超過4個字)。\n2. "category": 從這幾個分類中選擇最適合的一個：[${currentCatsStr}]。如果都不適合，請自創一個簡短的分類名稱 (例如：食物, 玩具)。\n3. "color": 建議一個柔和適合卡片背景的 Hex 色碼 (例如 #ffcdd2, #bbdefb)。` },
-                        { inlineData: { mimeType: "image/jpeg", data: base64Data } }
-                    ]
-                }],
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "OBJECT",
-                        properties: {
-                            label: { type: "STRING" },
-                            category: { type: "STRING" },
-                            color: { type: "STRING" }
-                        },
-                        required: ["label", "category", "color"]
-                    }
-                }
-            };
-
-            let retries = 3;
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`HTTP 錯誤狀態碼: ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    const textContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (!textContent) throw new Error("AI 回傳的結果無效");
-                    
-                    return JSON.parse(textContent);
-                } catch (err) {
-                    if (i === retries - 1) throw err;
-                    await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); 
-                }
-            }
-        }
-
-        /**
-         * 8. 編輯模式、 Modal 操作與備份管理
-         */
-        document.getElementById('edit-toggle-btn').addEventListener('click', () => {
-            isEditMode = !isEditMode;
-            document.getElementById('edit-toolbar').classList.toggle('hidden', !isEditMode);
-            renderTabs();  
-            renderCards(); 
-        });
-
-        // 搜尋功能
         const searchInput = document.getElementById('search-input');
         const clearSearchBtn = document.getElementById('clear-search-btn');
 
         searchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
-            clearSearchBtn.classList.toggle('hidden', !searchQuery);
+            clearSearchBtn.classList.toggle('hidden', searchQuery === '');
             renderTabs();
             renderCards();
         });
 
         clearSearchBtn.addEventListener('click', () => {
-            searchInput.value = '';
             searchQuery = '';
+            searchInput.value = '';
             clearSearchBtn.classList.add('hidden');
             renderTabs();
             renderCards();
         });
 
-        // Modal 元件引導
+        /**
+         * ==========================================
+         * 6. 🚨 叫護士緊急警報 (音效 + 全螢幕紅光閃爍)
+         * ==========================================
+         */
+        let audioCtx = null;
+        const alarmOverlay = document.getElementById('alarm-overlay');
+
+        document.getElementById('alarm-btn').addEventListener('click', () => {
+            startEmergencyAlarm();
+        });
+
+        document.getElementById('stop-alarm-btn').addEventListener('click', () => {
+            stopEmergencyAlarm();
+        });
+
+        function startEmergencyAlarm() {
+            alarmOverlay.classList.remove('hidden');
+            alarmOverlay.classList.add('flex', 'alarm-overlay-active');
+
+            playBeepPattern();
+            speakText('叫護士！有緊急需要！');
+
+            if (alarmInterval) clearInterval(alarmInterval);
+            alarmInterval = setInterval(() => {
+                playBeepPattern();
+                speakText('叫護士！');
+            }, 2500);
+        }
+
+        function stopEmergencyAlarm() {
+            alarmOverlay.classList.add('hidden');
+            alarmOverlay.classList.remove('flex', 'alarm-overlay-active');
+            if (alarmInterval) {
+                clearInterval(alarmInterval);
+                alarmInterval = null;
+            }
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function playBeepPattern() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const now = audioCtx.currentTime;
+                createBeepTone(880, now, 0.25);
+                createBeepTone(1760, now, 0.25);
+                createBeepTone(880, now + 0.35, 0.35);
+                createBeepTone(1760, now + 0.35, 0.35);
+            } catch (e) {
+                console.error('AudioContext 錯誤:', e);
+            }
+        }
+
+        function createBeepTone(freq, startTime, duration) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.3, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        }
+
+        /**
+         * ==========================================
+         * 7. 廣東話語音引擎 (Text-to-Speech)
+         * ==========================================
+         */
+        const synth = window.speechSynthesis;
+        let cantoneseVoice = null;
+
+        function loadVoices() {
+            if (!synth) return;
+            const voices = synth.getVoices();
+            cantoneseVoice =
+                voices.find(v => v.lang === 'zh-HK') ||
+                voices.find(v => v.lang.toLowerCase().includes('hk')) ||
+                voices.find(v => v.name.includes('Cantonese') || v.name.includes('粵語') || v.name.includes('Sinji')) ||
+                null;
+        }
+
+        if (synth) {
+            loadVoices();
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = loadVoices;
+            }
+        }
+
+        function speakText(text) {
+            if (!synth || !text || text.trim() === '') return;
+            if (synth.speaking) {
+                synth.cancel();
+            }
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'zh-HK';
+            if (cantoneseVoice) {
+                utter.voice = cantoneseVoice;
+            }
+            utter.rate = 0.85;
+            utter.pitch = 1.0;
+            synth.speak(utter);
+        }
+
+        /**
+         * ==========================================
+         * 8. 編輯模式切換 (密碼保護 0000) 與資料管理
+         * ==========================================
+         */
+        document.getElementById('edit-toggle-btn').addEventListener('click', () => {
+            if (isEditMode) {
+                // 退出編輯模式無需密碼
+                isEditMode = false;
+                document.getElementById('edit-toolbar').classList.add('hidden');
+                renderTabs();
+                renderCards();
+            } else {
+                // 進入編輯模式需驗證密碼 0000
+                showDialog({
+                    title: '🔒 照顧者驗證',
+                    message: '請輸入設定密碼以進入編輯模式：',
+                    type: 'password',
+                    onConfirm: (pwd) => {
+                        if (pwd === EDIT_MODE_PASSWORD) {
+                            isEditMode = true;
+                            document.getElementById('edit-toolbar').classList.remove('hidden');
+                            renderTabs();
+                            renderCards();
+                        } else {
+                            setTimeout(() => {
+                                showDialog({ title: '密碼錯誤', message: '輸入的密碼不正確，無法進入編輯模式。' });
+                            }, 100);
+                        }
+                    }
+                });
+            }
+        });
+
+        // 新增卡片按鈕
+        document.getElementById('add-card-btn').addEventListener('click', () => {
+            if (aacData.categories.length === 0) {
+                showDialog({ title: '提示', message: '請先新增至少一個分類！' });
+                return;
+            }
+            openEditModal(null);
+        });
+
+        // 匯出設定 JSON
+        document.getElementById('export-json-btn').addEventListener('click', () => {
+            const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(aacData, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute('href', dataStr);
+            dlAnchor.setAttribute('download', `aac_cantonese_backup_${new Date().toISOString().slice(0, 10)}.json`);
+            dlAnchor.click();
+        });
+
+        // 匯入設定 JSON
+        document.getElementById('import-json-btn').addEventListener('click', () => {
+            document.getElementById('import-json-input').click();
+        });
+
+        document.getElementById('import-json-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const imported = JSON.parse(event.target.result);
+                    if (Array.isArray(imported.categories) && Array.isArray(imported.cards)) {
+                        aacData = imported;
+                        currentCategory = aacData.categories[0] || '';
+                        saveDataToStorage();
+                        renderTabs();
+                        renderCards();
+                        showDialog({ title: '匯入成功', message: '已成功載入並儲存溝通板設定！' });
+                    } else {
+                        showDialog({ title: '格式錯誤', message: '檔案格式不正確，請選擇有效的 AAC 設定檔。' });
+                    }
+                } catch (err) {
+                    showDialog({ title: '讀取失敗', message: '無法解析 JSON 檔案：' + err.message });
+                }
+                e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
+
+        // 重設為預設卡片
+        document.getElementById('reset-default-btn').addEventListener('click', () => {
+            showDialog({
+                title: '重設預設卡片',
+                message: '確定要恢復所有分類與卡片至初始預設狀態嗎？\n⚠️ 你自行新增或修改的卡片將會被清除。',
+                type: 'confirm',
+                onConfirm: () => {
+                    aacData = JSON.parse(JSON.stringify(DEFAULT_AAC_DATA));
+                    currentCategory = aacData.categories[0];
+                    saveDataToStorage();
+                    renderTabs();
+                    renderCards();
+                    setTimeout(() => {
+                        showDialog({ title: '重設完成', message: '已恢復至最新預設分類與卡片！' });
+                    }, 100);
+                }
+            });
+        });
+
+        /**
+         * ==========================================
+         * 9. 編輯/新增卡片 Modal 與預設 Emoji 選擇器
+         * ==========================================
+         */
         const modal = document.getElementById('edit-modal');
         const modalTitle = document.getElementById('modal-title');
         const elId = document.getElementById('edit-id');
@@ -833,13 +844,29 @@
         const btnDelete = document.getElementById('delete-card-btn');
         const elPreview = document.getElementById('edit-icon-preview');
 
+        function renderPresetEmojis() {
+            const container = document.getElementById('preset-emojis-container');
+            container.innerHTML = '';
+            PRESET_EMOJIS.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-2xl p-1.5 bg-white hover:bg-blue-100 rounded-lg border border-slate-200 shadow-sm active:scale-90 transition-transform';
+                btn.innerText = emoji;
+                btn.onclick = () => {
+                    currentEditIconData = emoji;
+                    updateIconPreview();
+                };
+                container.appendChild(btn);
+            });
+        }
+
         function updateIconPreview() {
-            if (currentEditIconData.startsWith('data:image')) {
-                elPreview.innerHTML = `<img src="${currentEditIconData}" class="w-full h-full object-cover rounded-2xl">`;
+            if (currentEditIconData && currentEditIconData.startsWith('data:image')) {
+                elPreview.innerHTML = `<img src="${currentEditIconData}" class="w-full h-full object-cover">`;
                 elIcon.value = '';
-                elIcon.placeholder = '(已套用自訂圖片)';
+                elIcon.placeholder = '(已使用自訂圖片)';
             } else {
-                elPreview.innerHTML = currentEditIconData;
+                elPreview.innerHTML = currentEditIconData || '💬';
                 elIcon.value = currentEditIconData;
                 elIcon.placeholder = '輸入 Emoji，例如：🌬️';
             }
@@ -853,22 +880,53 @@
         document.getElementById('edit-camera-btn').addEventListener('click', () => {
             document.getElementById('edit-camera-input').click();
         });
+
         document.getElementById('edit-gallery-btn').addEventListener('click', () => {
             document.getElementById('edit-gallery-input').click();
         });
+
+        function compressImage(file, maxSize) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height && width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        } else if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.onerror = (e) => reject(e);
+                };
+                reader.onerror = (e) => reject(e);
+            });
+        }
 
         const handleEditImageReplace = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
             try {
-                const base64Image = await compressImage(file, 600);
+                const base64Image = await compressImage(file, 400);
                 currentEditIconData = base64Image;
                 updateIconPreview();
             } catch (error) {
-                console.error("圖片替換錯誤:", error);
-                showDialog({ title: '錯誤', message: '無法讀取或處理圖片。' });
+                console.error('圖片處理錯誤:', error);
+                showDialog({ title: '錯誤', message: '無法處理該圖片。' });
             } finally {
-                e.target.value = ''; 
+                e.target.value = '';
             }
         };
 
@@ -878,7 +936,7 @@
         function openEditModal(cardData) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
+
             elCategory.innerHTML = '';
             aacData.categories.forEach(cat => {
                 const opt = document.createElement('option');
@@ -886,27 +944,25 @@
                 opt.innerText = cat;
                 elCategory.appendChild(opt);
             });
-            
+
             if (cardData) {
-                modalTitle.innerText = "修改卡片";
+                modalTitle.innerText = '修改卡片';
                 elId.value = cardData.id;
                 elLabel.value = cardData.label;
-                currentEditIconData = cardData.icon; 
+                currentEditIconData = cardData.icon;
                 elCategory.value = cardData.category;
                 elColor.value = cardData.color || '#ffffff';
-                
                 btnDelete.classList.remove('hidden');
             } else {
-                modalTitle.innerText = "新增卡片";
-                elId.value = 'id-' + Date.now(); 
+                modalTitle.innerText = '新增卡片';
+                elId.value = 'id-' + Date.now();
                 elLabel.value = '';
-                currentEditIconData = '💬'; 
-                elCategory.value = currentCategory || aacData.categories[0]; 
-                elColor.value = '#e2e8f0';
-                
+                currentEditIconData = '💬';
+                elCategory.value = currentCategory || aacData.categories[0];
+                elColor.value = '#e3f2fd';
                 btnDelete.classList.add('hidden');
             }
-            
+
             updateIconPreview();
         }
 
@@ -922,20 +978,20 @@
             const newCard = {
                 id: id,
                 label: elLabel.value.trim() || '未命名',
-                icon: currentEditIconData || '❓', 
+                icon: currentEditIconData || '💬',
                 category: elCategory.value,
                 color: elColor.value
             };
 
             const existingIndex = aacData.cards.findIndex(c => c.id === id);
             if (existingIndex >= 0) {
-                aacData.cards[existingIndex] = newCard; 
+                aacData.cards[existingIndex] = newCard;
             } else {
-                aacData.cards.push(newCard); 
+                aacData.cards.push(newCard);
             }
-            
-            currentCategory = newCard.category; 
-            saveAACData();
+
+            currentCategory = newCard.category;
+            saveDataToStorage();
             closeModal();
             renderTabs();
             renderCards();
@@ -949,7 +1005,7 @@
                 type: 'confirm',
                 onConfirm: () => {
                     aacData.cards = aacData.cards.filter(c => c.id !== id);
-                    saveAACData();
+                    saveDataToStorage();
                     closeModal();
                     renderTabs();
                     renderCards();
@@ -957,83 +1013,10 @@
             });
         });
 
-        // 匯出 JSON 設定檔
-        document.getElementById('export-json-btn').addEventListener('click', () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(aacData, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `aac_board_config_${new Date().toISOString().slice(0,10)}.json`);
-            dlAnchorElem.click();
-        });
-
-        // 匯入 JSON 設定檔
-        document.getElementById('import-json-btn').addEventListener('click', () => {
-            document.getElementById('import-json-input').click();
-        });
-
-        document.getElementById('import-json-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                try {
-                    const imported = JSON.parse(event.target.result);
-                    if (imported && Array.isArray(imported.categories) && Array.isArray(imported.cards)) {
-                        aacData = imported;
-                        saveAACData();
-                        currentCategory = aacData.categories[0] || '';
-                        renderTabs();
-                        renderCards();
-                        showDialog({ title: '匯入成功', message: '已成功載入溝通板設定！' });
-                    } else {
-                        throw new Error("格式不符合 AAC 格式規定");
-                    }
-                } catch (err) {
-                    showDialog({ title: '匯入失敗', message: '無法讀取 JSON 檔案：' + err.message });
-                } finally {
-                    e.target.value = '';
-                }
-            };
-            reader.readAsText(file);
-        });
-
-        // 重設至預設數據
-        document.getElementById('reset-default-btn').addEventListener('click', () => {
-            showDialog({
-                title: '重設預設值',
-                message: '確定要將所有卡片與分類恢復為預設狀態嗎？\n⚠️ 此操作會覆蓋所有自訂修改！',
-                type: 'confirm',
-                onConfirm: () => {
-                    aacData = JSON.parse(JSON.stringify(DEFAULT_AAC_DATA));
-                    saveAACData();
-                    currentCategory = aacData.categories[0];
-                    renderTabs();
-                    renderCards();
-                    showDialog({ title: '重設成功', message: '溝通板已恢復為系統預設值。' });
-                }
-            });
-        });
-
-        // 設定 Gemini API Key
-        document.getElementById('api-key-btn').addEventListener('click', () => {
-            const currentKey = localStorage.getItem('gemini_api_key') || '';
-            showDialog({
-                title: '設定 Gemini API 金鑰',
-                message: '請輸入你的 Google Gemini API Key 以啟用 AI 拍照/圖庫物件自動辨識功能：',
-                type: 'prompt',
-                defaultValue: currentKey,
-                onConfirm: (newKey) => {
-                    if (newKey !== null) {
-                        localStorage.setItem('gemini_api_key', newKey.trim());
-                        setTimeout(() => showDialog({ title: '已儲存', message: 'Gemini API 金鑰設定已成功儲存！' }), 100);
-                    }
-                }
-            });
-        });
-
         /**
-         * 9. 通用系統提示視窗 (Dialog System)
+         * ==========================================
+         * 10. 自訂系統提示視窗 (支援 Alert / Confirm / Prompt / Password)
+         * ==========================================
          */
         function showDialog({ title, message, type = 'alert', defaultValue = '', onConfirm = null }) {
             const dialog = document.getElementById('system-dialog');
@@ -1048,11 +1031,20 @@
 
             inputEl.classList.add('hidden');
             inputEl.value = defaultValue;
+            inputEl.type = 'text';
+            inputEl.removeAttribute('inputmode');
             cancelBtn.classList.add('hidden');
-            
-            if (type === 'prompt') {
+
+            if (type === 'prompt' || type === 'password') {
                 inputEl.classList.remove('hidden');
                 cancelBtn.classList.remove('hidden');
+                if (type === 'password') {
+                    inputEl.type = 'password';
+                    inputEl.setAttribute('inputmode', 'numeric');
+                    inputEl.placeholder = '請輸入密碼';
+                } else {
+                    inputEl.placeholder = '';
+                }
                 setTimeout(() => inputEl.focus(), 100);
             } else if (type === 'confirm') {
                 cancelBtn.classList.remove('hidden');
@@ -1063,27 +1055,41 @@
                 dialog.classList.remove('flex');
                 confirmBtn.onclick = null;
                 cancelBtn.onclick = null;
+                inputEl.onkeydown = null;
             };
 
-            confirmBtn.onclick = () => {
+            const handleConfirm = () => {
                 let val = true;
-                if (type === 'prompt') val = inputEl.value;
+                if (type === 'prompt' || type === 'password') {
+                    val = inputEl.value;
+                }
                 closeDialog();
                 if (onConfirm) onConfirm(val);
             };
 
+            confirmBtn.onclick = handleConfirm;
             cancelBtn.onclick = closeDialog;
+            inputEl.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleConfirm();
+                }
+            };
 
             dialog.classList.remove('hidden');
             dialog.classList.add('flex');
         }
 
         /**
-         * 10. 初始化執行
+         * ==========================================
+         * 11. 初始化應用程式
+         * ==========================================
          */
-        renderTabs();
-        renderCards();
-
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPresetEmojis();
+            renderTabs();
+            renderCards();
+        });
     </script>
 </body>
 </html>
